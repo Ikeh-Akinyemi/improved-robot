@@ -1,0 +1,17 @@
+[
+  {
+    "email": "subscriber@example.com",
+    "name": "Test User 1",
+    "subscription_date": "2024-01-15"
+  },
+  {
+    "email": "customer@gmail.com", 
+    "name": "Test User 2",
+    "preferences": "weekly_newsletter"
+  },
+  {
+    "email": "broken@invalid",
+    "name": "Test User 3",
+    "source": "data_import"
+  }
+]
