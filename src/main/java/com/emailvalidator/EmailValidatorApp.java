@@ -1,99 +1,65 @@
 package com.emailvalidator;
 
-import java.io.IOException;
-import java.io.PrintWriter;
+import java.io.BufferedWriter;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
-import java.util.Scanner;
+import java.util.Map;
 
 public class EmailValidatorApp {
 
     public static void main(String[] args) {
+        // Step 1: Get API Key and Input File Path
+        String apiKey = System.getenv("MAILGUN_API_KEY");
+        if (args.length == 0) {
+            System.err.println("Usage: java -jar <jar-file> <path-to-your-csv-file>");
+            return;
+        }
+        String csvFilePath = args[0];
+
+        // Step 2: Initialize components
+        MailingListValidator validator = new MailingListValidator(apiKey);
+        if (!validator.isClientAvailable()) {
+            return; // Exit if the client couldn't be initialized
+        }
+        
+        MailingListLoader loader = new MailingListLoader();
+        BulkValidationProcessor processor = new BulkValidationProcessor(validator);
+
         try {
-            EmailListValidator validator = new EmailListValidator();
-            validator.testMailgunConnection();
-            validator.testMailgunConnection();
-
-            Scanner scanner = new Scanner(System.in);
-
-            System.out.println("=== BASIC EMAIL LIST LOADER ===");
-
-            // Test basic functionality first
-            validator.testBasicFunctionality();
-
-            System.out.print("Enter CSV file path (or 'test' to use test data): ");
-            String filePath = scanner.nextLine().trim();
-
-            if (filePath.isEmpty()) {
-                System.out.println("No file specified. Exiting.");
+            // Step 3: Load emails from CSV
+            List<String> emailsToValidate = loader.loadFromCsv(csvFilePath);
+            if (emailsToValidate.isEmpty()) {
+                System.out.println("No valid email addresses found in the file to validate.");
                 return;
             }
 
-            // If user types 'test', create a simple test file
-            if ("test".equals(filePath)) {
-                createTestCsvFile();
-                filePath = "test-emails.csv";
-            }
+            // Step 4: Run the bulk validation process
+            Map<String, ValidationResult> validationResults = processor.validateEmailList(emailsToValidate);
 
-            // Load emails
-            List<EmailRecord> emails = validator.loadEmailsFromCsv(filePath);
-
-            System.out.println("\n=== TESTING EMAIL VALIDATION ===");
-
-            // Test validation on a few different types of emails from our loaded list
-            if (!emails.isEmpty()) {
-                // // Test the first email (should be a normal address)
-                // validator.validateSingleEmail(emails.get(0).getEmail());
-
-                // // Test an obviously invalid email if we have one
-                // for (EmailRecord email : emails) {
-                //     if (!email.getEmail().contains("@") || email.getEmail().contains("invalid")) {
-                //         System.out.println();
-                //         validator.validateSingleEmail(email.getEmail());
-                //         break;
-                //     }
-                // }
-
-                // Test different types of validation endpoints to understand access patterns
-                validator.testBulkValidationAccess();
-                System.out.println(); // Add spacing for readability
-
-                validator.testBulkPreviewAccess();
-                System.out.println(); // Add spacing for readability
-
-                // Only test single email validation if bulk services seem to be working
-                System.out.println("Testing single email validation...");
-                validator.validateSingleEmail(emails.get(0).getEmail());
-            }
-
-            // Display results
-            System.out.println("\nSuccessfully loaded " + emails.size() + " email addresses:");
-            for (int i = 0; i < Math.min(5, emails.size()); i++) {
-                EmailRecord email = emails.get(i);
-                System.out.println("  " + (i + 1) + ". " + email.getEmail());
-                if (!email.getMetadata().isEmpty()) {
-                    System.out.println("     Metadata: " + email.getMetadata());
-                }
-            }
-
-            if (emails.size() > 5) {
-                System.out.println("  ... and " + (emails.size() - 5) + " more emails");
-            }
+            // Step 5: Filter the results
+            FilteredMailingList filteredList = new FilteredMailingList();
+            validationResults.forEach((email, result) -> filteredList.addAddress(email, result));
+            
+            // Step 6: Generate a report and save the cleaned list
+            filteredList.generateReport();
+            saveCleanedList(filteredList.getSafeAddresses(), "cleaned_mailing_list.csv");
 
         } catch (Exception e) {
-            System.err.println("Application failed: " + e.getMessage());
+            System.err.println("\n❌ An error occurred during the validation process:");
             e.printStackTrace();
         }
     }
 
-    private static void createTestCsvFile() throws IOException {
-        try (PrintWriter writer = new PrintWriter(new FileWriter("test-emails.csv"))) {
-            writer.println("email,name,source");
-            writer.println("john.doe@example.com,John Doe,website");
-            writer.println("jane.smith@gmail.com,Jane Smith,newsletter");
-            writer.println("bob.jones@company.com,Bob Jones,referral");
-            writer.println("alice.brown@outlook.com,Alice Brown,social");
+    private static void saveCleanedList(List<String> cleanedAddresses, String outputPath) throws IOException {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputPath))) {
+            writer.write("email");
+            writer.newLine();
+            for (String email : cleanedAddresses) {
+                writer.write(email);
+                writer.newLine();
+            }
         }
-        System.out.println("Created test-emails.csv with sample data");
+        System.out.printf("💾 Successfully saved %d safe email addresses to %s%n", cleanedAddresses.size(), outputPath);
     }
 }
