@@ -14,7 +14,6 @@ public class MailingListLoader {
         int emailColumnIndex = 0; // Assuming the first column is 'email'
 
         try (CSVReader reader = new CSVReader(new FileReader(filePath))) {
-            // Read header to find the email column (case-insensitive)
             String[] headers = reader.readNext();
             if (headers != null) {
                 for (int i = 0; i < headers.length; i++) {

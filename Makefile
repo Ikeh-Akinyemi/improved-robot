@@ -1,25 +1,18 @@
-# Makefile for the Mailgun Email Validator Java Project
 
-# Variables
 MVN := mvn
 MAIN_CLASS := com.emailvalidator.EmailValidatorApp
 
-# Define a variable for the CSV file path.
-# It can be overridden from the command line.
 # Example: make run FILE=path/to/another.csv
 FILE ?= data/input/test-emails.csv
 
-# Default target
 .PHONY: all
 all: build
 
-# Build the project
 .PHONY: build
 build:
 	@echo "Building the project with Maven..."
 	@$(MVN) clean package
 
-# Run the application with the specified CSV file
 .PHONY: run
 run: build
 	@echo "Running the application..."
@@ -27,13 +20,11 @@ run: build
 	@echo "Using input file: $(FILE)"
 	@$(MVN) exec:java -Dexec.mainClass="$(MAIN_CLASS)" -Dexec.args="$(FILE)"
 
-# Clean the project
 .PHONY: clean
 clean:
 	@echo "Cleaning the project (removing the target/ directory)..."
 	@$(MVN) clean
 
-# Run tests
 .PHONY: test
 test:
 	@echo "Running tests..."

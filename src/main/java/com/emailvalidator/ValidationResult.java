@@ -2,8 +2,8 @@ package com.emailvalidator;
 
 public class ValidationResult {
     private final String emailAddress;
-    private String result; // deliverable, undeliverable, risky, unknown
-    private String risk; // high, medium, low
+    private String result;
+    private String risk;
     private String reason;
     private boolean isDisposable;
     private boolean isRole;
@@ -38,7 +38,6 @@ public class ValidationResult {
         return "deliverable".equals(result) || "risky".equals(result);
     }
 
-    // Getters and Setters
     public String getEmailAddress() { return emailAddress; }
     public String getResult() { return result; }
     public void setResult(String result) { this.result = result; }

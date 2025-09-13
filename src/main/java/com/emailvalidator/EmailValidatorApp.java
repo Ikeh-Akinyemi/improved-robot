@@ -9,7 +9,6 @@ import java.util.Map;
 public class EmailValidatorApp {
 
     public static void main(String[] args) {
-        // Step 1: Get API Key and Input File Path
         String apiKey = System.getenv("MAILGUN_API_KEY");
         if (args.length == 0) {
             System.err.println("Usage: java -jar <jar-file> <path-to-your-csv-file>");
@@ -17,31 +16,27 @@ public class EmailValidatorApp {
         }
         String csvFilePath = args[0];
 
-        // Step 2: Initialize components
         MailingListValidator validator = new MailingListValidator(apiKey);
         if (!validator.isClientAvailable()) {
-            return; // Exit if the client couldn't be initialized
+            return;
         }
         
         MailingListLoader loader = new MailingListLoader();
         BulkValidationProcessor processor = new BulkValidationProcessor(validator);
 
         try {
-            // Step 3: Load emails from CSV
             List<String> emailsToValidate = loader.loadFromCsv(csvFilePath);
             if (emailsToValidate.isEmpty()) {
                 System.out.println("No valid email addresses found in the file to validate.");
                 return;
             }
 
-            // Step 4: Run the bulk validation process
             Map<String, ValidationResult> validationResults = processor.validateEmailList(emailsToValidate);
 
-            // Step 5: Filter the results
+            // Filter the results
             FilteredMailingList filteredList = new FilteredMailingList();
             validationResults.forEach((email, result) -> filteredList.addAddress(email, result));
             
-            // Step 6: Generate a report and save the cleaned list
             filteredList.generateReport();
             saveCleanedList(filteredList.getSafeAddresses(), "cleaned_mailing_list.csv");
 
