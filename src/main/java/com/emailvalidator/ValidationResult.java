@@ -23,19 +23,14 @@ public class ValidationResult {
             return false;
         }
         
-        // Rule 3: Exclude disposable emails.
+        // Rule 3: Exclude disposable emails to avoid temporary signups.
         if (isDisposable) {
             return false;
         }
 
-        // Rule 4: 'deliverable' with 'low' risk is always safe.
-        if ("deliverable".equals(result) && "low".equals(risk)) {
-            return true;
-        }
-        
-        // Rule 5: By default, consider 'deliverable' and 'risky' addresses as safe,
-        // as long as they don't violate the stricter rules above.
-        return "deliverable".equals(result) || "risky".equals(result);
+        // If none of the removal rules match, consider the address safe.
+        // This includes 'deliverable' and 'risky' (with medium/low risk) addresses.
+        return true; 
     }
 
     public String getEmailAddress() { return emailAddress; }
